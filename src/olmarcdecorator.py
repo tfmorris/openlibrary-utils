@@ -14,7 +14,7 @@ import urllib
 CACHE_DIR = '../cache/'
 DATA_DIR = '../data/'
 RATE = 2.0 # requests/second
-
+FIELDS_REMOVED = ['583','596','852','856']
 count = 0
 
 requests_cache.install_cache('openlibrary')
@@ -24,6 +24,7 @@ bitly = file('../bitly_credentials.txt').readlines()
 
 BITLY_LOGIN = bitly[0].rstrip('\n').strip()
 BITLY_API_KEY = bitly[1].rstrip('\n').strip()
+
 
 def make_throttle_hook(timeout=1.0):
     """
@@ -152,9 +153,11 @@ def add_url(record, url,tag):
         print "Unable to resolve URL: ",url, response
 
 def update_marc_record(record,iaid,olurl):
-    # Delete Internet Archive labels for 856s and add our own
-    for field in record.get_fields('856'):
-        record.remove_field(field)
+    # Delete Internet Archive labels for 856s and any other unwanted fields
+    for code in FIELDS_REMOVED:
+        for field in record.get_fields(code):
+            record.remove_field(field)
+    
     add_url(record, "https://archive.org/download/%s/%s.epub" % (iaid,iaid),"ePub")
     add_url(record, "https://www.amazon.com/gp/digital/fiona/web-to-kindle?clientid=IA&itemid=%s&docid=%s" % (iaid, iaid),"Kindle")
     add_url(record, olurl,"multiple formats")
@@ -162,7 +165,7 @@ def update_marc_record(record,iaid,olurl):
     # Add a series
     record.add_ordered_field(pymarc.Field(
                                 tag = u'490',
-                                indicators = [u'1',''],
+                                indicators = ['1',' '],
                                 subfields = [
                                     u'a', u'Rediscover the classics',
                                 ])
@@ -170,14 +173,14 @@ def update_marc_record(record,iaid,olurl):
     # Add a couple new subjects
     record.add_ordered_field(pymarc.Field(
                                 tag = u'655',
-                                indicators = [u'4',''],
+                                indicators = ['4',' '],
                                 subfields = [
                                     u'a', u'Electronic books.',
                                 ])
                      )
     record.add_ordered_field(pymarc.Field(
                                 tag = u'655',
-                                indicators = [u'4',''],
+                                indicators = [' ', '4'],
                                 subfields = [
                                     u'a', u'EBook classics.',
                                 ])
@@ -185,7 +188,7 @@ def update_marc_record(record,iaid,olurl):
     # Add additional Uniform Title
     record.add_ordered_field(pymarc.Field(
                                 tag = u'830',
-                                indicators = [u'0',''],
+                                indicators = [' ','0'],
                                 subfields = [
                                     u'a', u'Rediscover the classics.',
                                 ])
