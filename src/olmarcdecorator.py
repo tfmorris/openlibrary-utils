@@ -14,7 +14,7 @@ import urllib
 CACHE_DIR = '../cache/'
 DATA_DIR = '../data/'
 RATE = 2.0 # requests/second
-FIELDS_REMOVED = ['583','596','852','856']
+FIELDS_REMOVED = ['583','596','852','856','699','790']
 count = 0
 
 requests_cache.install_cache('openlibrary')
@@ -240,9 +240,9 @@ def main():
             try:
                 writer.write(record)
             except:
-                'Print failed to write MARC record for ',marcurl
+                print '** failed to write MARC record for ',marcurl
         else:
-            print 'Unexpectedly missing ocaid for ',jsonurl
+            print '** Unexpectedly missing ocaid for ',jsonurl
     writer.close()
     print 'Wrote %d MARC records' % (count-1)
 
