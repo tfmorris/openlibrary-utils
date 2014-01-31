@@ -9,7 +9,9 @@ import pymarc
 from requests import ConnectionError
 import requests_cache
 import time
+import traceback
 import urllib
+from xml.sax import SAXParseException
 
 CACHE_DIR = '../cache/'
 DATA_DIR = '../data/'
@@ -152,6 +154,15 @@ def add_url(record, url,tag):
     else:
         print "Unable to resolve URL: ",url, response
 
+def add_subject(record, subject):
+    record.add_ordered_field(pymarc.Field(
+                                tag = u'655',
+                                indicators = [' ', '4'],
+                                subfields = [
+                                    u'a', subject,
+                                ])
+                             )
+
 def update_marc_record(record,iaid,olurl):
     # Delete Internet Archive labels for 856s and any other unwanted fields
     for code in FIELDS_REMOVED:
@@ -171,20 +182,9 @@ def update_marc_record(record,iaid,olurl):
                                 ])
                      )
     # Add a couple new subjects
-    record.add_ordered_field(pymarc.Field(
-                                tag = u'655',
-                                indicators = ['4',' '],
-                                subfields = [
-                                    u'a', u'Electronic books.',
-                                ])
-                     )
-    record.add_ordered_field(pymarc.Field(
-                                tag = u'655',
-                                indicators = [' ', '4'],
-                                subfields = [
-                                    u'a', u'EBook classics.',
-                                ])
-                     )
+    add_subject(record, u'Electronic books.')
+    add_subject(record,  u'EBook classics.')
+
     # Add additional Uniform Title
     record.add_ordered_field(pymarc.Field(
                                 tag = u'830',
@@ -211,10 +211,10 @@ def shorten_url(url):
 def main():
 #    with pymarc.MARCWriter(file(DATA_DIR+'SCCLclassics.mrc','wb')) as writer:
     writer = pymarc.MARCWriter(codecs.open(DATA_DIR+'SCCLclassics.mrc','w','utf-8'))
-    count = 0
+    count = written = 0
     for line in codecs.open(DATA_DIR+'SCCL classics candidates - v3 selected.tsv', encoding='utf-8'):
         count += 1
-        if count == 1:
+        if count < 2:
             continue # skip header line
         url = line.rstrip('\n').split('\t')[6].replace('https:','http:')
         print '  ',url
@@ -236,14 +236,18 @@ def main():
                 except SAXParseException:
                     records = None
             record = update_marc_record(records[0],ia,url)
-            record.force_utf8 = True
+#            record.force_utf8 = True
             try:
                 writer.write(record)
+                written += 1
             except:
                 print '** failed to write MARC record for ',marcurl
+                print traceback.format_exc()
+                #for field in record.fields:
+                #    print str(field)
         else:
             print '** Unexpectedly missing ocaid for ',jsonurl
     writer.close()
-    print 'Wrote %d MARC records' % (count-1)
+    print 'Wrote %d of %d MARC records' % (written, count-1)
 
 main()
