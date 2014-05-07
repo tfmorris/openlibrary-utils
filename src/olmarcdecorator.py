@@ -169,7 +169,7 @@ def update_marc_record(record,iaid,olurl):
         for field in record.get_fields(code):
             record.remove_field(field)
     
-    add_url(record, "https://archive.org/download/%s/%s.epub" % (iaid,iaid),"ePub")
+    add_url(record, "https://archive.org/download/%s/%s.epub" % (iaid,iaid),"EPub")
     add_url(record, "https://www.amazon.com/gp/digital/fiona/web-to-kindle?clientid=IA&itemid=%s&docid=%s" % (iaid, iaid),"Kindle")
     add_url(record, olurl,"multiple formats")
 
